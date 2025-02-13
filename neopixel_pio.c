@@ -21,6 +21,9 @@ const int SW = 22;
 
 int last_button = -1;  // Armazena o último botão pressionado
 
+int global_brigthness = 50;
+int led_x = 2, led_y = 2;
+
 const uint button_pins[BUTTON_COUNT] = {2, 3, 4, 5};  // Definição dos botões
 
 typedef struct {
@@ -53,7 +56,7 @@ void npInit(uint pin) {
 
 void npSetLED(uint index, uint8_t r, uint8_t g, uint8_t b) {
     if (index < LED_COUNT) {
-        leds[index] = (pixel_t){g, r, b};
+        leds[index] = (pixel_t){g * global_brigthness / 255, r * global_brigthness / 255, b * global_brigthness / 255};
     }
 }
 
@@ -83,14 +86,14 @@ void flashRed(uint times) {
     }
 } 
 
-void joystick_read_axis(uint16_t *eixo_x, uint16_t *eixto_y){
+void joystick_read_axis(uint16_t *eixo_x, uint16_t *eixo_y){
     adc_select_input(ADC_CHANNEL_0);
     sleep_us(2);
     *eixo_x = adc_read();
 
     adc_select_input(ADC_CHANNEL_1);
     sleep_us(2);
-    *eixo_x = adc_read();
+    *eixo_y = adc_read();
 } 
 
 void showSequence() {
@@ -110,7 +113,7 @@ void showSequence() {
 
     // Garante que o LED azul em (1,0) fique aceso desde o início
     int led_azul_index = getLedIndex(1, 0);
-    npSetLED(led_azul_index, 0, 0, 255);
+    npSetLED(led_azul_index, 50, 50, 50);
     npWrite();
 }
 
@@ -173,13 +176,13 @@ void checkInput() {
         printf("Botão correto pressionado!\n");
 
         // Acender rapidamente o LED azul para dar feedback
-        npSetLED(button, 0, 0, 255);
+        npSetLED(button, 50, 50, 50);
         npWrite();
         sleep_ms(300);
 
         // Continua normalmente no jogo
         npClear();
-        npSetLED(led_azul_index, 0, 0, 255); // Mantém o azul aceso
+        npSetLED(led_azul_index, 50, 50, 50); // Mantém o azul aceso
         npWrite();
 
         player_index++;
@@ -197,19 +200,46 @@ void checkInput() {
     }
 }
 
+void updateLedPosition(){
+    uint16_t eixo_x, eixo_y;
+    joystick_read_axis(&eixo_x, &eixo_y);
+
+    int threshold = 1000; //Sensibikidade do joystick
+
+    if(eixo_x > 3000 && led_x < 4){
+        led_x++; //Movimentando para direita
+    }else if(eixo_x < 1000 && led_x > 0){
+        led_x--; //Movimentando para a esquerda
+    }
+
+    if(eixo_y > 3000 && led_y > 0){
+        led_y--;
+    }else if(eixo_y < 1000 && led_y < 4){
+        led_y++;
+    }
+
+    //Atualizando matriz 
+    npClear();
+    int index = getLedIndex(led_x, led_y);
+    npSetLED(index, 50, 50, 50);
+    npWrite();
+}
+
 
 int main() {
-    int bt = 0;
     stdio_init_all();
     sleep_ms(2000);
     npInit(LED_PIN);
     npClear();
     npWrite();
-    initButtons();
+    setup_joystick();
+    //initButtons();
     srand(time_us_64());
 
     resetGame();
 
-    while (true)
-        checkInput();
+    while (true){
+        updateLedPosition();
+        sleep_ms(100);
+    }
 }
