@@ -98,6 +98,7 @@ void showSequence() {
     npWrite();
     sleep_ms(500);
 
+    // Exibir a sequência verde
     for (int i = 0; i < sequence_length; i++) {
         npSetLED(sequence[i], 0, 255, 0); // LEDs verdes
         npWrite();
@@ -107,11 +108,10 @@ void showSequence() {
         sleep_ms(250);
     }
 
-    // Após a sequência verde, acende o LED azul do último botão pressionado
-    if (last_button != -1) {
-        npSetLED(last_button, 0, 0, 255);
-        npWrite();
-    }
+    // Garante que o LED azul em (1,0) fique aceso desde o início
+    int led_azul_index = getLedIndex(1, 0);
+    npSetLED(led_azul_index, 0, 0, 255);
+    npWrite();
 }
 
 
@@ -165,16 +165,23 @@ void checkInput() {
     while ((button = readButton()) == -1)
         sleep_ms(10);
 
-    last_button = button; // Salva o último botão pressionado
+    // O LED azul deve ser associado ao clique do botão
+    int led_azul_index = getLedIndex(1, 0);
 
-    npSetLED(button, 0, 0, 255);  // Mostra azul ao pressionar
-    npWrite();
+    // Se o botão pressionado for o esperado (LED azul)
+    if (button == led_azul_index) {
+        printf("Botão correto pressionado!\n");
 
-    sleep_ms(300);
-    npClear();
-    npWrite();
+        // Acender rapidamente o LED azul para dar feedback
+        npSetLED(button, 0, 0, 255);
+        npWrite();
+        sleep_ms(300);
 
-    if (button == sequence[player_index]) {
+        // Continua normalmente no jogo
+        npClear();
+        npSetLED(led_azul_index, 0, 0, 255); // Mantém o azul aceso
+        npWrite();
+
         player_index++;
         if (player_index == sequence_length) {
             sequence_length++;
@@ -183,11 +190,13 @@ void checkInput() {
             showSequence();
         }
     } else {
+        printf("Erro! Botão errado pressionado.\n");
         flashRed(3);
         sleep_ms(1000);
         resetGame();
     }
 }
+
 
 int main() {
     int bt = 0;
