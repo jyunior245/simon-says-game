@@ -21,8 +21,8 @@ const int SW = 22;
 
 int last_button = -1;  // Armazena o último botão pressionado
 
-int global_brigthness = 50;
-int led_x = 2, led_y = 2;
+int global_brigthness = 25;
+int led_x = 1, led_y = 1;
 
 const uint button_pins[BUTTON_COUNT] = {2, 3, 4, 5};  // Definição dos botões
 
@@ -39,7 +39,11 @@ int player_index = 0;
 int sequence_length = 1;
 
 int getLedIndex(int x, int y) {
-    return (y * 5) + x;  // Ajuste para matriz 5x5
+    if (y % 2 == 0) { 
+        return (y * 5) + x;  // Linhas pares (esquerda → direita)
+    } else {
+        return (y * 5) + (4 - x); // Linhas ímpares (direita → esquerda)
+    }
 }
 
 
@@ -87,11 +91,11 @@ void flashRed(uint times) {
 } 
 
 void joystick_read_axis(uint16_t *eixo_x, uint16_t *eixo_y){
-    adc_select_input(ADC_CHANNEL_0);
+    adc_select_input(ADC_CHANNEL_1);
     sleep_us(2);
     *eixo_x = adc_read();
 
-    adc_select_input(ADC_CHANNEL_1);
+    adc_select_input(ADC_CHANNEL_0);
     sleep_us(2);
     *eixo_y = adc_read();
 } 
@@ -200,31 +204,43 @@ void checkInput() {
     }
 }
 
-void updateLedPosition(){
+void updateLedPosition() {
     uint16_t eixo_x, eixo_y;
     joystick_read_axis(&eixo_x, &eixo_y);
 
-    int threshold = 1000; //Sensibikidade do joystick
+    int threshold = 1000; // Sensibilidade do joystick
+    int max_x = 4, max_y = 4; // Dimensões da matriz
 
-    if(eixo_x > 3000 && led_x < 4){
-        led_x++; //Movimentando para direita
-    }else if(eixo_x < 1000 && led_x > 0){
-        led_x--; //Movimentando para a esquerda
+    static int last_x = 0, last_y = 0; // Guarda os últimos valores para debounce
+
+    // Movimenta horizontalmente
+    if (eixo_x > 3000 && led_x > 0 && last_x != 1 ) {
+        led_x--; 
+        last_x = 1; // Marca que o movimento foi feito
+    } else if (eixo_x < 1000 && led_x < max_x && last_x != 1) {
+        led_x++;
+        last_x = -1;
+    } else if (eixo_x >= 1000 && eixo_x <= 3000) {
+        last_x = 0; // Reseta a marcação quando o joystick volta ao centro
     }
 
-    if(eixo_y > 3000 && led_y > 0){
+    // Movimenta verticalmente
+    if (eixo_y > 3000 && led_y < max_y && last_y == 0) {
+        led_y++; 
+        last_y = 1;
+    } else if (eixo_y < 1000 && led_y > 0 && last_y == 0) {
         led_y--;
-    }else if(eixo_y < 1000 && led_y < 4){
-        led_y++;
+        last_y = -1;
+    } else if (eixo_y >= 1000 && eixo_y <= 3000) {
+        last_y = 0;
     }
 
-    //Atualizando matriz 
+    // Atualiza a matriz para refletir a nova posição do LED
     npClear();
-    int index = getLedIndex(led_x, led_y);
-    npSetLED(index, 50, 50, 50);
+    int ledIndex = getLedIndex(led_x, led_y);
+    npSetLED(ledIndex, 50, 50, 50); // LED branco indicando a posição
     npWrite();
 }
-
 
 int main() {
     stdio_init_all();
