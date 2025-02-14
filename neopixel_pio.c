@@ -242,6 +242,38 @@ void updateLedPosition() {
     npWrite();
 }
 
+void checkJoystickClick() {
+    if (!gpio_get(SW)) {  // Se o botão do joystick for pressionado
+        sleep_ms(50);  // Debounce
+        if (!gpio_get(SW)) {
+            int current_led_index = getLedIndex(led_x, led_y);
+
+            if (current_led_index == sequence[player_index]) {
+                printf("Correto! Avançando na sequência.\n");
+
+                // Mantém o LED verde aceso
+                npSetLED(current_led_index, 0, 255, 0);
+                npWrite();
+                sleep_ms(300);
+
+                player_index++;
+
+                if (player_index == sequence_length) {
+                    sequence_length++;
+                    player_index = 0;
+                    sleep_ms(500);
+                    showSequence();  // Exibir nova sequência
+                }
+            } else {
+                printf("Erro! Posição errada.\n");
+                flashRed(3);
+                sleep_ms(1000);
+                resetGame();
+            }
+        }
+    }
+}
+
 int main() {
     stdio_init_all();
     sleep_ms(2000);
@@ -254,8 +286,9 @@ int main() {
 
     resetGame();
 
-    while (true){
+    while (true) {
         updateLedPosition();
+        checkJoystickClick();  // Verifica se o jogador clicou corretamente
         sleep_ms(100);
-    }
+    }    
 }
