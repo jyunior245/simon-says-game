@@ -145,12 +145,15 @@ int readButton() {
 
 void resetGame() {
     sequence_length = 1;
-    
+    player_index = 0;  // Reinicia a posição do jogador na sequência
+
+    // Gera uma nova sequência corretamente
     for (int i = 0; i < MAX_SEQUENCE; i++)
         sequence[i] = rand() % LED_COUNT;
 
-    showSequence();
+    showSequence(); // Exibe a nova sequência
 }
+
 
 void setup_joystick(){
     adc_init();
@@ -248,7 +251,7 @@ void checkJoystickClick() {
         if (!gpio_get(SW)) {
             int current_led_index = getLedIndex(led_x, led_y);
 
-            if (current_led_index == sequence[player_index]) {
+            if (player_index < sequence_length && current_led_index == sequence[player_index]) {
                 printf("Correto! Avançando na sequência.\n");
 
                 // Mantém o LED verde aceso
@@ -268,7 +271,7 @@ void checkJoystickClick() {
                 printf("Erro! Posição errada.\n");
                 flashRed(3);
                 sleep_ms(1000);
-                resetGame();
+                resetGame();  // Agora reinicia corretamente o jogo
             }
         }
     }
