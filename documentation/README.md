@@ -27,6 +27,13 @@ A tabela abaixo descreve a alocação de pinos da Raspberry Pi Pico para cada co
 | Joystick VRy | GP27 (ADC1) |
 | Joystick Botão | GP22 |
 
+## Fluxograma 
+
+Logo em baixo é apresentado como o sistema do jogo Simon Says deverá funcionar através de uma comunicação gráfica, nesse caso, um fluxograma.
+
+![Simon Says Game](/images/fluxograma-simons-says.jpg)
+
+
 ## Estruturas de Dados
 ### `pixel_t`
 A estrutura `pixel_t` é utilizada para armazenar as cores de cada LED na matriz. Cada LED possui três componentes de cor (vermelho, verde e azul), que podem ser configurados individualmente.
