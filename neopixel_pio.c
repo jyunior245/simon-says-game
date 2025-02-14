@@ -11,7 +11,7 @@
 #define LED_PIN 7
 #define MAX_SEQUENCE 10
 
-// Pinos do joystick
+// Pinos do joystickr
 const int vRx = 20; 
 const int vRy = 27;
 const int ADC_CHANNEL_0 = 0;
